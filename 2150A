@@ -1,0 +1,24 @@
+#include<bits/stdc++.h>
+using namespace std;
+void slv() {
+    int n,m; string s; cin>>n>>m>>s;
+    set<int> ans;
+    for(int i=1;i<=m;++i){
+        int x; cin>>x;ans.insert(x);
+    }
+    int ps = 1;
+    for(int i=0;i<n;++i) {
+        ++ps;
+        if(s[i] =='B')while(ans.count(ps))++ps;
+        ans.insert(ps);
+        if(s[i]  =='B')while(ans.count(ps)) ++ps;
+    }
+    cout<<ans.size()<<endl;
+    for(int x:ans) cout<< x<< " ";cout<<endl;
+}
+
+int main() {
+    int T; cin>>T;
+    while(T--) slv();
+    return 0;
+}
