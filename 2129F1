@@ -1,0 +1,34 @@
+#include<bits/stdc++.h>
+using namespace std;
+int a[845],cnt;
+vector<int>ask[30];
+void geta(){
+    for(int i=0;i<30;i++)a[++cnt]=1<<i;
+    for(int i=0;i<30;i++)for(int j=i+1;j<30;j++)a[++cnt]=(1<<i)|(1<<j);
+    for(int k=1;k<10;k++)for(int i=0;i<29;i++)
+        if(k>1||(i!=0&&i!=2&&i!=4))a[++cnt]=(1<<i)|(1<<((i+k)%29))|(1<<29);
+    a[++cnt]=7,a[++cnt]=56;
+    for(int i=0;i<10;i++)for(int j=0;j<10;j++)a[++cnt]=(1<<i)|(1<<(i+10))|(1<<(20+j));
+    for(int i=0;i<10;i++)a[++cnt]=(1<<((i+9)%10))|(1<<(i+10))|(1<<(20+i));
+    for(int i=0;i<9;i++)a[++cnt]=(1<<(i+9)%10)|(1<<(i+10))|(1<<(21+i));
+}
+int n,ret[900];
+void sol(){
+    for(int i=0;i<30;i++)ask[i].clear();
+    scanf("%d",&n),memset(ret,0,sizeof(ret));
+    for(int i=0;i<n;i++)
+        for(int j=0;j<30;j++)if(a[i]>>j&1)ask[j].emplace_back(i);
+    for(int i=0;i<30;i++){
+        int w=ask[i].size(),x;if(!w)continue;
+        if(i<29)printf("1 %d ",w); else printf("3 %d ",w);
+        for(auto x:ask[i])printf("%d ",x+1);puts(""),fflush(stdout);
+        while(w--)scanf("%d",&x),ret[x]|=1<<i;
+    }
+    map<int,int>mp;
+    for(int i=1;i<=n;i++)mp[ret[i]]=i;
+    printf("! ");for(int i=0;i<n;i++)printf("%d ",mp[a[i]]);puts(""),fflush(stdout);
+}
+int main(){
+    geta();
+    int t;scanf("%d",&t);while(t--)sol();
+}
