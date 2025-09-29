@@ -1,0 +1,43 @@
+#include <bits/stdc++.h>
+#define int long long 
+using namespace std;
+void solve(int l,int r,vector<int> v,vector<int> vv){
+	if(v.size()==1){
+		cout<<"! "<<v[0]<<endl;
+		return;
+	}
+	int mid=(l+r)>>1;
+	int sizl=mid-l+1,sizr=r-mid;
+	vector<int> vl,vr,vvl,vvr;
+	for(int i:v){
+		int ll,rr;
+		cout<<"? "<<i<<" "<<mid-l+1<<" ";
+		for(int j=l;j<=mid;j++)cout<<j<<" ";cout<<endl;
+		scanf("%lld",&ll);
+		cout<<"? "<<i<<" "<<r-mid<<" ";
+		for(int j=mid+1;j<=r;j++)cout<<j<<" ";cout<<endl;
+		scanf("%lld",&rr);
+		if(ll&&rr)sizl--,sizr--,vvl.push_back(i),vvr.push_back(i);
+		else if(ll)vl.push_back(i);
+		else vr.push_back(i);
+	}
+	for(int i:vv){
+		cout<<"? "<<i<<" "<<mid-l+1<<" ";
+		for(int j=l;j<=mid;j++)cout<<j<<" ";cout<<endl;
+		int x;scanf("%lld",&x);
+		if(x)sizl--,vvl.push_back(i);
+		else sizr--,vvr.push_back(i);
+	}
+	if(sizl%2)solve(l,mid,vl,vvl);
+	else solve(mid+1,r,vr,vvr);
+}
+signed main(){
+	int T;
+	cin>>T;
+	while(T--){
+		int n;scanf("%lld",&n);
+		vector<int> v,vv;
+		for(int i=1;i<=n;i++)v.push_back(i);
+		solve(1,2*n-1,v,vv);
+	}
+}
