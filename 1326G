@@ -1,0 +1,64 @@
+#include<bits/stdc++.h>
+using namespace std;
+const long long mod=998244353;
+struct tri{double z;long long x,y;bool operator<(const tri&a) const{return z<a.z;}};
+struct vec{long long x,y;}a[105];
+long long n,u,v,e[205],ne[205],h[105],idx=1,fa[105],f[105],g[105][3],sf[105],dfn[105],out[105],dcnt,col[105],st[105][105],vis[105],ff;
+vector<long long>q[105];
+vector<tri>p;
+inline void add(long long a,long long b){e[idx]=b,ne[idx]=h[a],h[a]=idx++;}
+inline vec operator-(const vec&a,const vec&b){return (vec){a.x-b.x,a.y-b.y};}
+inline double jd(vec a){return atan2(a.y,a.x);}
+inline long long cro(vec a,vec b){return a.x*b.y-a.y*b.x;}
+inline long long qsm(long long a,long long b){long long ans=1;while(b){if(b&1) ans=ans*a%mod;a=a*a%mod,b>>=1;}return ans;}
+void dfs(long long u,long long fr)
+{
+	fa[u]=fr,sf[u]=1,dfn[u]=++dcnt;
+	for(long long i=h[u];i;i=ne[i])
+		if(e[i]!=fr)
+		{
+			dfs(e[i],u),sf[u]=sf[u]*f[e[i]]%mod,q[u].insert(q[u].end(),q[e[i]].begin(),q[e[i]].end());
+			for(long long j:q[e[i]]) col[j]=e[i];
+		}
+	q[u].push_back(u),p.clear();
+	for(long long i:q[u])
+		for(long long j:q[u])
+			if(i!=j)
+			{
+				if(!st[i][j])
+				{
+					st[i][j]=1;
+					for(long long k=i;k!=fa[u];k=fa[k]) vis[k]=1;
+					for(long long k=j;!vis[k];k=fa[k]) st[i][j]=st[i][j]*sf[k]%mod*qsm(f[k],mod-2)%mod;
+					for(long long k=i;k!=fa[u];k=fa[k]) vis[k]=0;
+				}
+				ff=0;
+				for(long long k=i;k!=u;k=fa[k]) if(cro(a[fa[k]]-a[i],a[j]-a[i])>0){ff=1;break;}
+				for(long long k=j;!ff&k!=u;k=fa[k]) if(cro(a[fa[k]]-a[i],a[j]-a[i])>0){ff=1;break;}
+				if(i!=u&&dfn[i]<=dfn[j]&&out[j]<=out[i]||j!=u&&dfn[i]>=dfn[j]&&out[j]>=out[i]||ff) continue;
+				p.push_back((tri){jd((a[j]-a[i])),i,j});
+			}
+	st[u][u]=1,sort(p.begin(),p.end());
+	for(long long i:q[u])
+	{
+		for(long long j:q[u]) g[j][0]=g[j][1]=g[j][2]=0;
+		g[i][(i==u)]=1;
+		for(auto j:p)
+		{
+			long long x=j.x,y=j.y;
+			if(y==u) g[y][1]=(g[y][1]+(g[x][0]+g[x][1])%mod*st[x][y]%mod)%mod;
+			else if(x!=u&&col[x]!=col[y]||i!=u&&col[y]!=col[i]) g[y][2]=(g[y][2]+(g[x][0]+g[x][2])%mod*st[x][y]%mod)%mod;
+			else g[y][0]=(g[y][0]+g[x][0]*st[x][y])%mod,g[y][1]=(g[y][1]+g[x][1]*st[x][y])%mod,g[y][2]=(g[y][2]+g[x][2]*st[x][y])%mod;
+		}
+		f[u]=(f[u]+(g[i][1]+g[i][2])%mod*sf[u]%mod)%mod;
+	}
+	out[u]=dcnt;
+}
+int main()
+{
+	scanf("%lld",&n);
+	for(int i=1;i<=n;++i) scanf("%lld%lld",&a[i].x,&a[i].y);
+	for(int i=1;i<n;++i) scanf("%lld%lld",&u,&v),add(u,v),add(v,u);
+	dfs(1,0),printf("%lld",f[1]);
+	return 0;
+}
