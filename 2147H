@@ -1,0 +1,84 @@
+#include<bits/stdc++.h>
+using namespace std;bool Mbe;
+namespace MAOJUN{
+
+const int N=55,M=1230;
+int n,m,eu[M],ev[M],ew[M];
+int g[N][N];
+
+int S,T,nw[N],dp[N];
+inline bool bfs(){
+	memset(dp+1,0xff,n<<2);dp[S]=0;
+	queue<int>Q;Q.emplace(S);
+	while(!Q.empty()){
+		int u=Q.front();Q.pop();
+		for(int v=nw[u]=1;v<=n;v++)
+			if(!~dp[v]&&g[u][v]){Q.emplace(v);dp[v]=dp[u]+1;}
+	}
+	return~dp[T];
+}
+int dfs(int u,int in){
+	if(u==T)return in;int lt=in;
+	for(int v=nw[u];v<=n&&lt;v=nw[u]){
+		if(!g[u][v]||dp[v]^dp[u]+1){nw[u]=v+1;continue;}
+		int f=dfs(v,min(g[u][v],lt));
+		if(!f){dp[v]=-1;nw[u]=v+1;}
+		else{g[u][v]-=f;g[v][u]+=f;lt-=f;}
+	}
+	return in-lt;
+}
+int gc,p[N];
+void dvd(int l,int r){
+	if(l==r)return;
+	S=p[l];T=p[r];
+	for(int i=1;i<=n;i++)memset(g[i]+1,0,n<<2);
+	for(int i=1;i<=m;i++)g[eu[i]][ev[i]]=g[ev[i]][eu[i]]=ew[i];
+	int x=0;while(bfs())x+=dfs(S,1e8);gc=__gcd(gc,x);
+	int m=stable_partition(p+l,p+r+1,[&](int x){return~dp[x];})-p;
+	dvd(l,m-1);dvd(m,r);
+}
+int c[N];
+void cns(int d){
+	for(int o=d;o<=n;o++)if(accumulate(g[p[o]]+1,g[p[o]]+n+1,0)&1){
+		swap(p[o],p[d]);o=p[d];
+		for(int i=d+1;i<=n;i++)if(g[o][p[i]]){
+			g[p[i]][o]^=1;
+			for(int j=i+1;j<=n;j++)if(g[o][p[j]]){
+				g[p[i]][p[j]]^=1;g[p[j]][p[i]]^=1;
+			}
+		}
+		cns(d+1);int cc[2]={0,0};
+		for(int i=d+1;i<=n;i++)if(g[o][p[i]])
+			cc[c[p[i]]]++;
+		c[p[d]]=cc[0]&1;
+		return;
+	}
+	for(int i=d;i<=n;i++)c[p[i]]=0;
+}
+inline void slv(){
+	scanf("%d%d",&n,&m);
+	for(int i=1;i<=m;i++)scanf("%d%d%d",&eu[i],&ev[i],&ew[i]);
+	iota(p+1,p+n+1,1);gc=0;dvd(1,n);
+	if(gc^1){printf("1\n%d\n",n);for(int i=1;i<=n;i++)printf("%d ",i);puts("");return;}
+	for(int i=1;i<=n;i++)memset(g[i]+1,0,n<<2);
+	for(int i=1;i<=m;i++)g[eu[i]][ev[i]]=g[ev[i]][eu[i]]=ew[i]&1;
+	iota(p+1,p+n+1,1);cns(1);
+	puts("2");
+	for(int o:{0,1}){
+		printf("%d\n",count(c+1,c+n+1,o));
+		for(int i=1;i<=n;i++)if(c[i]==o)printf("%d ",i);puts("");
+	}
+}
+inline void main(){int T;scanf("%d",&T);while(T--)slv();}
+
+}bool Med;int main(){
+#ifdef IO
+	freopen("1.in","r",stdin);
+	freopen("data.out","w",stdout);
+#endif
+#ifdef TM
+	atexit([]{fprintf(stderr,"%.lfms\n%lfMB\n",clock()*1000./CLOCKS_PER_SEC,(&Mbe-&Med)/1024./1024);});
+#endif
+	MAOJUN::main();
+	return 0;
+}
