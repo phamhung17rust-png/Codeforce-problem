@@ -1,0 +1,83 @@
+#include<bits/stdc++.h>
+
+using namespace std;
+
+struct node {
+	int x, y, d;
+	bool operator==(const node &oth) const { return x == oth.x && y == oth.y && d == oth.d; }
+	bool operator!=(const node &oth) const { return !(*this == oth); }
+};
+
+int dx[] = {0, 1, 0, -1}, dy[] = {1, 0, -1, 0};
+char dc[] = {'R', 'D', 'L', 'U'};
+
+int main(){
+	ios_base::sync_with_stdio(0); cin.tie(0);
+	int n, m; cin >> n >> m;
+	vector<string> gr(n);
+	for(auto &x : gr)cin >> x;
+	vector<vector<vector<node>>> par(n, vector<vector<node>> (m, vector<node> (4, {-1, -1, -1})));
+	deque<pair<node, node>> q1, q2;
+	for(int i = 0; i < n; ++i){
+		for(int j = 0; j < m; ++j){
+			if(gr[i][j] == 'S'){
+				q1.emplace_back((node){i, j, 0}, (node){i, j, 0});
+				q1.emplace_back((node){i, j, 1}, (node){i, j, 1});
+				q1.emplace_back((node){i, j, 2}, (node){i, j, 2});
+				q1.emplace_back((node){i, j, 3}, (node){i, j, 3});
+			}
+		}
+	}
+	while(q1.size() || q2.size()) {
+		if(!q1.size())swap(q1, q2);
+		auto [cu, p] = q1.front();
+		q1.pop_front();
+		if(cu.x < 0 || cu.x >= n || cu.y < 0 || cu.y >= m) {
+			cout << "YES\n";
+			int ans = 0;
+			vector<node> ord;
+			while(cu != p) {
+				if((gr[p.x][p.y] == '/' || gr[p.x][p.y] == '\\') && cu.d == p.d)ans++;
+				if(cu.x < 0 || cu.x >= n || cu.y < 0 || cu.y >= m || gr[cu.x][cu.y] != '#')ord.push_back(cu);
+				cu = par[p.x][p.y][p.d];
+				swap(p, cu);
+			}
+			ord.push_back(cu);
+			reverse(ord.begin(), ord.end());
+			cout << dc[ord[0].d] << '\n';
+			cout << ans << '\n';
+			for(int i = 0; i < (int)ord.size() - 1; ++i){
+				if((gr[ord[i].x][ord[i].y] == '/' || gr[ord[i].x][ord[i].y] == '\\') && ord[i].d == ord[i + 1].d)cout << i << ' ' << ord[i].x + 1 << ' ' << ord[i].y + 1 << '\n';
+			}
+			return 0;
+		}
+		if(~par[cu.x][cu.y][cu.d].d)continue;
+		par[cu.x][cu.y][cu.d] = p;
+		if(gr[cu.x][cu.y] == '#'){
+			p.d = cu.d ^ 2;
+			q1.emplace_back(p, cu);
+		}
+		else if(gr[cu.x][cu.y] == '/') {
+			p.d = cu.d;
+			p = {cu.x + dx[p.d], cu.y + dy[p.d], p.d};
+			q2.emplace_front(p, cu);
+			p.d = cu.d ^ 3;
+			p = {cu.x + dx[p.d], cu.y + dy[p.d], p.d};
+			q1.emplace_back(p, cu);
+		}
+		else if(gr[cu.x][cu.y] == '\\') {
+			p.d = cu.d;
+			p = {cu.x + dx[p.d], cu.y + dy[p.d], p.d};
+			q2.emplace_front(p, cu);
+			p.d = cu.d ^ 1;
+			p = {cu.x + dx[p.d], cu.y + dy[p.d], p.d};
+			q1.emplace_back(p, cu);
+		}
+		else {
+			p.d = cu.d;
+			p = {cu.x + dx[p.d], cu.y + dy[p.d], p.d};
+			q1.emplace_back(p, cu);
+		}
+	}
+	cout << "NO\n";
+}
