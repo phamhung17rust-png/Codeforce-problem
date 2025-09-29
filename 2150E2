@@ -1,0 +1,120 @@
+#include <bits/stdc++.h>// phamhung
+
+using i64 = long long;
+using u64 = unsigned long long;
+using u32 = unsigned;
+
+using u128 = unsigned __int128;
+using i128 = __int128;
+
+int query(int x, std::vector<int> s) {
+    std::cout << "? " << x << " " << s.size();
+    for (auto i : s) {
+        std::cout << " " << i;
+    }
+    std::cout << std::endl;
+    int ans;
+    std::cin >> ans;
+    return ans;
+}
+
+std::mt19937 rng(std::chrono::steady_clock::now().time_since_epoch().count());
+
+void solve() {
+    int n;
+    std::cin >> n;
+    
+    std::vector<int> p(2 * n - 1);
+    std::iota(p.begin(), p.end(), 1);
+    std::shuffle(p.begin(), p.end(), rng);
+    
+    std::vector<int> v0(n);
+    std::iota(v0.begin(), v0.end(), 1);
+    int L = 0, R = 2 * n - 1;
+    {
+        int l = L, r = R;
+        int m = (l + r) / 2;
+        
+        int al = 0, ar = 0;
+        al -= (m - l);
+        ar -= (r - m);
+        
+        std::vector<int> sl, sr;
+        for (int i = l; i < m; i++) {
+            sl.push_back(p[i]);
+        }
+        for (int i = m; i < r; i++) {
+            sr.push_back(p[i]);
+        }
+        
+        std::vector<int> v0l, v0r;
+        for (auto x : v0) {
+            if (query(x, sl)) {
+                if (query(x, sr)) {
+                    al++;
+                    ar++;
+                } else {
+                    al += 2;
+                    v0l.push_back(x);
+                }
+            } else {
+                ar += 2;
+                v0r.push_back(x);
+            }
+        }
+        
+        assert(std::abs(al - ar) == 1);
+        
+        if (al > ar) {
+            v0 = v0l;
+            R = m;
+        } else {
+            v0 = v0r;
+            L = m;
+        }
+    }
+    
+    int ans = 0;
+    for (auto x : v0) {
+        int l = L, r = R;
+        while (r - l > 1) {
+            int m = (l + r) / 2;
+            
+            std::vector<int> sl, sr;
+            for (int i = l; i < m; i++) {
+                sl.push_back(p[i]);
+            }
+            for (int i = m; i < r; i++) {
+                sr.push_back(p[i]);
+            }
+            
+            if (query(x, sl)) {
+                if (query(x, sr)) {
+                    break;
+                }
+                r = m;
+            } else {
+                l = m;
+            }
+        }
+        if (r - l == 1) {
+            ans = x;
+            break;
+        }
+    }
+    std::cout << "! " << ans << std::endl;
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    
+    int t;
+    std::cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}// done
