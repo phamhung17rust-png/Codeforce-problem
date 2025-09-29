@@ -1,0 +1,100 @@
+#include <bits/stdc++.h>
+#define x first
+#define y second
+using namespace std;
+#define ll long long
+#define pii pair<int,int>
+using vi=vector<int>;
+using vl=vector<ll>;
+#define pb push_back
+#define all(a) begin(a),end(a)
+
+const int N=1000010,MOD=1e9+7,M=1<<20;
+const char en='\n';
+const ll LLINF=1ll<<40;
+
+int n;
+ll d,sw,fl,wa,pr[N],dp[N];
+vl vas;
+pair<ll,ll> seg[M*2+10];
+
+pair<ll,ll> mer(pair<ll,ll> a,pair<ll,ll> b)
+{
+	return {a.x+b.x,min(a.y,a.x+b.y)};
+}
+
+pair<ll,ll> ge(int l,int r,int lo=0,int hi=M,int i=1)
+{
+	if (lo>=l && hi<=r) return seg[i];
+	if (lo>=r || hi<=l) return {0,LLINF*N};
+	int mid=(lo+hi)/2;
+	return mer(ge(l,r,lo,mid,i*2),ge(l,r,mid,hi,i*2+1));
+}
+
+void upd(int i,ll x)
+{
+	i+=M;
+	seg[i].x+=x;
+	seg[i].y+=x;
+	for (i/=2;i;i/=2) seg[i]=mer(seg[i*2],seg[i*2+1]);
+}
+
+int getInd(ll x)
+{
+	return lower_bound(all(vas),x)-vas.begin();
+}
+
+int main()
+{
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
+	cin>>n>>d>>sw>>fl>>wa;
+	if (fl<sw)
+	{
+		cout<<(n-1)*fl<<en;
+		exit(0);
+	}
+	for (int i=0;i<n;++i)
+	{
+		int x;
+		cin>>x;
+		pr[i+1]=pr[i]+x-d;
+	}
+	for (int i=0;i<=n;++i)
+	{
+		vas.pb(pr[i]);
+		vas.pb(pr[i]+d);
+		vas.pb(pr[i]+2*d);
+	}
+	vas.pb(-LLINF);
+	sort(all(vas));
+	vas.erase(unique(all(vas)),vas.end());
+	upd(0,LLINF);
+	upd(getInd(0),-LLINF);
+	upd(getInd(0)+1,LLINF);
+	for (int i=1;i<n;++i)
+	{
+		dp[i]=ge(0,getInd(pr[i]+d)).y+(i-1)*sw+fl;
+		ll swimtohere=ge(0,getInd(pr[i]+d)+1).y+(i-1)*sw;
+		ll flytohere=ge(0,getInd(pr[i]+2*d)).y+(i-2)*sw+fl;
+		int p2=getInd(pr[i]+d);
+		ll va2=min(swimtohere,flytohere)-(i-1)*sw,cu2=ge(0,p2+1).x;
+		if (va2<cu2)
+		{
+			upd(p2,va2-cu2);
+			upd(p2+1,cu2-va2);
+		}
+		int pl=getInd(pr[i]);
+		upd(pl+1,2*wa);
+		ll va=dp[i]-i*sw;
+		ll cu=ge(0,pl+1).x;
+		if (va<cu)
+		{
+			upd(pl,va-cu);
+			upd(pl+1,cu-va);
+		}
+	}
+	ll swimtoend=ge(0,getInd(pr[n]+d)+1).y+(n-1)*sw;
+	ll flytoend=ge(0,getInd(pr[n]+2*d)).y+(n-2)*sw+fl;
+	cout<<min(swimtoend,flytoend)<<en;
+}
