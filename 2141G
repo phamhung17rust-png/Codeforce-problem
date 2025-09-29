@@ -1,0 +1,86 @@
+fun main() {
+    repeat(readInt()) {
+        val n = readInt()
+        val x = IntArray(n)
+        val y = IntArray(n)
+        for (i in 0 until n) {
+            val (a, b) = readInts()
+            x[i] = a
+            y[i] = b
+        }
+        fun compress(c: IntArray) {
+            val d = IntArray(2 * n)
+            for (i in 0 until n) {
+                d[2 * i] = c[i]
+                d[2 * i + 1] = c[i] + 1
+            }
+            val ds = d.sorted().distinct()
+            for (i in 0 until n) {
+                c[i] = ds.binarySearch(c[i])
+            }
+        }
+        compress(x)
+        compress(y)
+        val order = IntArray(n) { it }.sortedWith(compareBy({ x[it] }, { y[it] }))
+        val last = IntArray(2 * n) { -1 }
+        val b = IntArray(2 * n)
+        var lastBeg = 0
+        var beg = 0
+        var ans = 0L
+        var sv = IntArray(n)
+        var sc = IntArray(n)
+        while (beg < n) {
+            var end = beg
+            while (end + 1 < n && x[order[end + 1]] == x[order[end]]) {
+                end += 1
+            }
+            for (i in beg..end) {
+                last[y[order[i]]] = beg
+            }
+            for (i in lastBeg until beg) {
+                if (last[y[order[i]]] != beg || x[order[lastBeg]] < x[order[beg]] - 1) {
+                    b[y[order[i]]] = 0
+                }
+            }
+            var sz = 0
+            var sum = 0L
+            var lastY = -2
+            for (i in beg..end) {
+                if (b[y[order[i]]] == 0) {
+                    b[y[order[i]]] = 1
+                } else {
+                    b[y[order[i]]] += 2
+                }
+                val me = b[y[order[i]]]
+                var eaten = 0
+                if (y[order[i]] > lastY + 1) {
+                    sz = 0
+                    sum = 0
+                } else {
+                    while (sz > 0 && sv[sz - 1] > me) {
+                        sz -= 1
+                        sum -= sv[sz].toLong() * sc[sz]
+                        eaten += sc[sz]
+                    }
+                }
+                sv[sz] = me
+                sc[sz] = eaten + 1
+                sum += sv[sz].toLong() * sc[sz]
+                sz += 1
+                lastY = y[order[i]]
+                ans += sum - (me + 1) / 2
+            }
+            lastBeg = beg
+            beg = end + 1
+        }
+        println(ans * 2)
+    }
+}
+
+private fun readInt() = readln().toInt()
+private fun readLong() = readln().toLong()
+private fun readDouble() = readln().toDouble()
+private fun readStrings() = readln().split(" ")
+private fun readInts() = readStrings().map { it.toInt() }
+private fun readLongs() = readStrings().map { it.toLong() }
+private fun readDoubles() = readStrings().map { it.toDouble() }
