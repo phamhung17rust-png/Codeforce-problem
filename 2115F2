@@ -1,0 +1,139 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=3e5+5,M=3e7+5;
+const double a=0.2928,W=a/(1-a);
+int n,m,cnt,rt,lst,vis[N],tot;
+bitset<M>s;
+struct node1{
+	int id,nxt;
+}w[M];
+struct node{
+	int ls,rs,tag,siz,st,ed;
+}t[M];
+int new_node()
+{
+	return ++cnt;
+}
+void pushup(int p)
+{
+	t[p].siz=t[t[p].ls].siz+t[t[p].rs].siz;
+}
+void add(int p,int x)
+{
+	tot++,w[tot].id=x;
+	if(!t[p].st)t[p].st=t[p].ed=tot;
+	else w[t[p].ed].nxt=tot,t[p].ed=tot;
+}
+void join(int p)
+{
+	add(t[p].ls,p),add(t[p].rs,p);
+}
+void build(int &p,int l,int r)
+{
+	p=new_node(),s[p]=1;
+	if(l==r)
+	{
+		t[p].siz=1;
+		return;
+	}
+	int mid=l+r>>1;
+	build(t[p].ls,l,mid),build(t[p].rs,mid+1,r),pushup(p),join(p);
+}
+void pushdown(int p)
+{
+	if(!t[p].tag)return;
+	int ls=t[p].ls,rs=t[p].rs;
+	t[ls].tag^=1,t[rs].tag^=1,swap(t[ls].ls,t[ls].rs),swap(t[rs].ls,t[rs].rs),t[p].tag=0;
+}
+int merge(int x,int y)
+{
+	if(!x||!y)return x|y;
+	if(t[x].siz*W<=t[y].siz&&t[y].siz*W<=t[x].siz)
+	{
+		int z=new_node();
+		t[z].ls=x,t[z].rs=y,pushup(z),join(z),s[z]=1;
+		return z;
+	}
+	if(t[x].siz>t[y].siz)
+	{
+		int ls=t[x].ls,rs=t[x].rs,sz=t[x].siz+t[y].siz;
+		pushdown(x),s[x]=0;
+		if(t[ls].siz>=a*sz)return merge(ls,merge(rs,y));
+		pushdown(rs),s[rs]=0;
+		int ret=merge(merge(ls,t[rs].ls),merge(t[rs].rs,y));
+		return ret;
+	}
+	else
+	{
+		int ls=t[y].ls,rs=t[y].rs,sz=t[x].siz+t[y].siz;
+		pushdown(y),s[y]=0;
+		if(t[rs].siz>=a*sz)return merge(merge(x,ls),rs);
+		pushdown(ls),s[ls]=0;
+		int ret=merge(merge(x,t[ls].ls),merge(t[ls].rs,rs));
+		return ret;
+	}
+}
+void split(int now,int k,int &x,int &y)
+{
+	if(!now)
+	{
+		x=y=0;
+		return;
+	}
+	if(!k)
+	{
+		x=0,y=now;
+		return;
+	}
+	if(k==t[now].siz)
+	{
+		x=now,y=0;
+		return;
+	}
+	pushdown(now),s[now]=0;
+	int ls=t[now].ls,rs=t[now].rs;
+	if(k<=t[ls].siz)split(ls,k,x,y),y=merge(y,rs);
+	else split(rs,k-t[ls].siz,x,y),x=merge(ls,x);
+}
+int find(int x,int k)
+{
+	if(t[x].siz==1)return x;
+	pushdown(x);
+	if(k<=t[t[x].ls].siz)return find(t[x].ls,k);
+	return find(t[x].rs,k-t[t[x].ls].siz);
+}
+int calc(int x)
+{
+	if(x<0)
+	{
+		if(vis[-x])return 0;
+		return -x;
+	}
+	while(t[x].st)
+	{
+		int y=w[t[x].st].id,z=calc(y);
+		if(z)return z;
+		if(y<0||!s[y])t[x].st=w[t[x].st].nxt;
+		else break;
+	}
+	return 0;
+}
+signed main()
+{
+	scanf("%d%d",&n,&m);
+	build(rt,1,n);
+	for(int i=1;i<=m;i++)
+	{
+		int a,b,c,x,y;
+		scanf("%d%d%d",&a,&b,&c);
+		if(a==1)b=(b+lst-1)%n+1;
+		if(a==2)b=(b+lst-1)%n+1;
+		if(a==3)b=(b+lst-1)%m+1;
+		if(a==1)split(rt,b,x,y),add(x,-i),rt=merge(x,y);
+		if(a==2)split(rt,b,x,y),t[x].tag^=1,swap(t[x].ls,t[x].rs),rt=merge(x,y);
+		if(a==3&&b<=i)vis[b]=1;
+		c=(c+lst-1)%n+1;
+		printf("%d\n",lst=calc(find(rt,c)));
+	}
+	return 0;
+}
