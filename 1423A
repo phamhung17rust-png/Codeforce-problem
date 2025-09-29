@@ -1,0 +1,14 @@
+#include <bits/stdc++.h>
+using namespace std;
+typedef long long ll;
+const ll md = 1e9+7, lim = 1e3 + 7 ,base = 29;
+ll n;
+
+int main()
+{
+     cin.tie(0)->sync_with_stdio(0);
+     
+      cin>>n;
+      for(ll i = 1; i <= n; i++)cout<<i<<"\n";
+    return 0;
+}
