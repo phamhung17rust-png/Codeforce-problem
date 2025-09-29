@@ -1,0 +1,49 @@
+#include<bits/stdc++.h>
+#define F first
+#define S second
+using namespace std;
+typedef long long LL;
+typedef pair<LL,LL> pr;
+inline LL rd(){
+	LL x=0,y=1;char c=getchar();
+	for(;c<'0'||c>'9';c=getchar())if(c=='-')y=-1;
+	for(;c>='0'&&c<='9';c=getchar())x=(x<<1)+(x<<3)+(c^48);
+	return x*y;
+}
+const LL p=998244353,N=500005;
+LL qp(LL x,LL y){LL z=1;for(;y;y>>=1,x=x*x%p)if(y&1)z=z*x%p;return z;}
+LL n,m,T,sz[N],cnt,a[N],b[N],c[N],g[N],tg[N],ls[N],rs[N],cn,lm,an;
+void pd(LL x){a[x]+=tg[x];if(ls[x])tg[ls[x]]+=tg[x];if(rs[x])tg[rs[x]]+=tg[x];tg[x]=0;}
+void pu(LL x){sz[x]=sz[ls[x]]+sz[rs[x]]+1;}
+LL mg(LL x,LL y){
+    if(!x||!y)return x^y;pd(x);pd(y);
+    if(g[x]>g[y]){rs[x]=mg(rs[x],y);pu(x);return x;}
+    ls[y]=mg(x,ls[y]);pu(y);return y;
+}
+void sp(LL x,LL s1,LL s2,LL &u,LL &v,LL g,LL w){
+    if(!x){u=v=0;return;}pd(x);
+    LL o=g+sz[ls[x]],t1=s1+a[x]-w*(o+1),t2=s2+w*o;
+    if(t2<=t1)u=x,sp(rs[x],s1,s2,rs[x],v,o+1,w),pu(u);
+    else v=x,sp(ls[x],s1,s2,u,ls[x],g,w),pu(v);
+}
+void df(LL x){pd(x);if(ls[x])df(ls[x]);if((++cn)<=lm)an+=a[x];if(rs[x])df(rs[x]);}
+int main(){
+    srand(time(0));
+	for(T=rd();T--;){
+        n=rd();for(LL i=1;i<=n;++i)c[i]=0;cnt=0;
+        for(LL i=1;i<=n;++i)b[i]=rd(),c[b[i]]=i;
+        LL rt=0;cn=an=0;
+        for(LL i=1;i<=n;++i)
+        if(c[i]){
+            if(c[i]&1){an+=2*cn*i+i-i*i,++cn;if(rt)tg[rt]+=2*i;}
+            else{an+=i*i-2*cn*i-i*(n%2==0);if(rt)tg[rt]-=2*i;}
+        }else{
+            LL s1=i*i-2*cn*i-i*(n%2==0),s2=2*cn*i+i-i*i,u,v;an+=s1;
+            sp(rt,s1,s2,u,v,0,2*i);if(u)tg[u]-=2*i;if(v)tg[v]+=2*i;
+            ++cnt;g[cnt]=rand();sz[cnt]=1;ls[cnt]=rs[cnt]=tg[cnt]=0;a[cnt]=s2-s1+4*i*sz[u];
+            rt=mg(u,mg(cnt,v));
+        }
+        an+=n*(n+1)/2*(n/2+1);lm=(n+1)/2;if(rt)df(rt);printf("%lld\n",an);
+    }
+	return 0;
+}
