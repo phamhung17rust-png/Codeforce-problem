@@ -1,0 +1,57 @@
+#include<bits/stdc++.h>
+#define mod 998244353
+#define N 20000005
+using namespace std;
+int power(int x,int y){
+	int res=1;
+	while(y){
+		if(y&1) res=1ll*res*x%mod;
+		x=1ll*x*x%mod;
+		y=y/2;
+	}
+	return res;
+}
+int n,fac[N],ifac[N];
+int f[N],g[N],w[N],p[N/10],cp;
+bool bl[N];
+int C(int x,int y){
+	if(y<0||x<y) return 0;
+	return 1ll*fac[x]*ifac[x-y]%mod*ifac[y]%mod;
+}
+int main(){
+	n=2e7+1;fac[0]=1;
+	for(int i=1;i<=n;i++) fac[i]=1ll*fac[i-1]*i%mod;
+	ifac[n]=power(fac[n],mod-2);
+	for(int i=n;i>=1;i--) ifac[i-1]=1ll*ifac[i]*i%mod;
+	f[1]=2;
+	for(int i=2;i<=n;i++){
+		if(!bl[i]) p[++cp]=i,f[i]=2*(i+1),g[i]=i+1;
+		for(int j=1;j<=cp&&p[j]*i<=n;j++){
+			bl[i*p[j]]=1;
+			if(i%p[j]==0){
+				g[i*p[j]]=g[i]*p[j]+1;
+				f[i*p[j]]=f[i]/g[i]*g[i*p[j]];
+				break;
+			}
+			f[i*p[j]]=f[i]*(p[j]+1);
+			g[i*p[j]]=(p[j]+1);
+		}
+	}
+	for(int i=2;i<=n;i+=2) f[i]=f[i/2]*2;
+	for(int i=1;i<=n;i++){
+		w[i-1]+=f[i];
+		w[i]-=2*f[i];
+		w[i+1]+=f[i];
+	}
+	w[0]--;
+	for(int i=1;i<=n;i++)
+		w[i]=(3ll*mod+w[i]+((i&1)?2:-2))%mod;
+	int t;scanf("%d",&t);
+	while(t--){
+		scanf("%d",&n);
+		int ans=0;
+		for(int i=n%2;i<=n;i+=2)
+			ans=(ans+1ll*C(n,(n+i)/2)*w[i])%mod;
+		printf("%d\n",ans);
+	}
+} 
