@@ -1,0 +1,41 @@
+#include<bits/stdc++.h>
+using namespace std;
+#define pi pair<int,int>
+#define vec vector<int>
+#define pb push_back
+#define double long double
+void in(int &x){
+    x=0;int f=1;char c=getchar();
+    while((c>'9'||c<'0')&&c!='-')c=getchar();
+    if(c=='-')f=-1,c=getchar();
+    while(c>='0'&&c<='9')x=x*10+c-'0',c=getchar();
+    x*=f;
+}
+int t,n,m,k,x,y,w,a[100005],b[100005];
+char s[1000005];
+double f[100005],ans;
+int hook(int i,int j){return a[i]-j+b[j]-i+1;}
+signed main(){
+    in(n);scanf("%s",s+1);
+    for(int i=1;i<n;i++)if(s[i]=='>')w++;
+    x=0;y=w;a[0]=w;b[w]=0;
+    for(int i=1;i<n;i++){
+        if(s[i]=='<')x++;else y--;
+        a[x]=max(a[x],y);b[y]=max(b[y],x);
+    }
+    x=0;y=w;m=min(500,n);f[0]=1;
+    for(int i=1;i<=n;i++){
+        double w=0;
+        for(int j=0;j<=m;j++){
+            if(j<=x&&j<=y)f[j]/=hook(x-j,y-j);
+            else f[j]=0;w=max(w,f[j]);
+        }
+        ans+=log2l(w);for(int j=0;j<=m;j++)f[j]/=w;
+        if(i==n)break;
+        if(s[i]=='<'){x++;for(int j=m;j>=1;j--)f[j]+=f[j-1];}
+        else {y--;for(int j=0;j<=m;j++)f[j]+=f[j+1];}
+    }
+    ans+=log2l(f[0]);
+    for(int i=1;i<=n;i++)ans+=log2l(i);
+    printf("%.9Lf\n",ans);
+}
