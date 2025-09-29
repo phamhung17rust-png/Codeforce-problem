@@ -1,0 +1,61 @@
+#include<bits/stdc++.h>
+using namespace std;bool Mbe;
+namespace MAOJUN{
+ 
+typedef long double db;typedef pair<db,db> pi;
+int n,a[20][20],d[801][801];
+const pair<int,int>dd[]={{0,1},{0,-1},{1,0},{-1,0}};
+const int V=618005;
+vector<pair<int,int>>b[V];
+ 
+#define fi first
+#define se second
+inline pi operator-(const pi&x,const pi&y){return pi(x.fi-y.fi,x.se-y.se);}
+inline db dis(const pi&x,const pi&y){pi z=x-y;return z.fi*z.fi+z.se*z.se;}
+inline db crs(const pi&x,const pi&y){return x.se*y.fi-x.fi*y.se;}
+const db eps=1e-12;
+inline void main(){
+	scanf("%d",&n);
+	for(int i=0;i<n;i++)for(int j=0;j<n;j++)scanf("%d",&a[i][j]);
+	vector<pi>A;
+	function<void(int,int)>f=[&](int x0,int y0){
+		memset(d,0x3f,sizeof d);
+		b[d[n*n][n*n]=0].emplace_back(n*n,n*n);
+		for(int t=0;t<V;t++){
+			for(auto[x,y]:b[t])if(d[x][y]==t)for(auto[xx,yy]:dd){
+				xx+=x;yy+=y;
+				if(0<=xx&&xx<=n*n*2&&0<=yy&&yy<=n*n*2)
+					if(int w=t+abs(a[(x0+x)%n][(y0+y)%n]-a[(x0+xx)%n][(y0+yy)%n])+1;w<V&&d[xx][yy]>w)
+						b[d[xx][yy]=w].emplace_back(xx,yy);
+			}
+			b[t].clear();
+		}
+		for(int i=-n;i<=n;i++)for(int j=abs(i)-n;j<=n-abs(i);j++)if(i||j){
+			db t=(db)n/d[(n+i)*n][(n+j)*n];A.emplace_back(i*t,j*t);
+		}
+	};
+	f(0,0);for(int i=1;i<n;i++){f(0,i);f(i,0);}
+	rotate(A.begin(),min_element(A.begin(),A.end()),A.end());
+	sort(A.begin()+1,A.end(),[&](const pi&x,const pi&y){
+		db c=crs(x-A.front(),y-A.front());
+		return c>eps||(c>-eps&&dis(A.front(),x)<dis(A.front(),y));
+	});
+	vector<pi>B;
+	for(pi x:A){
+		while(B.size()>1&&crs(x-B[B.size()-2],B.back()-B[B.size()-2])>-eps)B.pop_back();
+		B.emplace_back(x);
+	}
+	int s=B.size();db as=0;
+	for(int i=0;i<s;i++)as+=crs(B[i],B[(i+1)%s]);
+	printf("%.Lf\n",as*5e39);
+}
+ 
+}bool Med;int main(){
+#ifdef LOCAL
+    freopen("4.in","r",stdin);
+    freopen("data.out","w",stdout);
+    atexit([](){fprintf(stderr,"%.0lfms\n%lfMB\n",clock()*1000./CLOCKS_PER_SEC,(&Mbe-&Med)/1024./1024);});
+#endif
+    MAOJUN::main();
+    return 0;
+}
