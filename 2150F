@@ -1,0 +1,285 @@
+#include <bits/stdc++.h>
+
+using i64 = long long;
+using u64 = unsigned long long;
+using u32 = unsigned;
+
+using u128 = unsigned __int128;
+using i128 = __int128;
+struct DSU {
+    std::vector<int> f, siz;
+    
+    DSU() {}
+    DSU(int n) {
+        init(n);
+    }
+    
+    void init(int n) {
+        f.resize(n);
+        std::iota(f.begin(), f.end(), 0);
+        siz.assign(n, 1);
+    }
+    
+    int find(int x) {
+        while (x != f[x]) {
+            x = f[x] = f[f[x]];
+        }
+        return x;
+    }
+    
+    bool same(int x, int y) {
+        return find(x) == find(y);
+    }
+    
+    bool merge(int x, int y) {
+        x = find(x);
+        y = find(y);
+        if (x == y) {
+            return false;
+        }
+        siz[x] += siz[y];
+        f[y] = x;
+        return true;
+    }
+    
+    int size(int x) {
+        return siz[find(x)];
+    }
+};
+void solve() {
+    int n, m;
+    std::cin >> n >> m;
+    
+    std::vector g(n, std::vector<int>(n));
+    DSU dsu(n);
+    std::vector<std::vector<int>> adj(n);
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        std::cin >> u >> v;
+        u--;
+        v--;
+        g[u][v] = g[v][u] = 1;
+        
+        if (dsu.merge(u, v)) {
+            adj[u].push_back(v);
+            adj[v].push_back(u);
+        }
+    }
+    
+    std::vector<int> p(n, -1), dep(n);
+    
+    auto dfs = [&](this auto &&self, int x) -> void {
+        for (auto y : adj[x]) {
+            if (y == p[x]) {
+                continue;
+            }
+            p[y] = x;
+            dep[y] = dep[x] + 1;
+            self(y);
+        }
+    };
+    dfs(0);
+    
+    int S = std::max_element(dep.begin(), dep.end()) - dep.begin();
+    p[S] = -1;
+    dep[S] = 0;
+    dfs(S);
+    
+    int T = std::max_element(dep.begin(), dep.end()) - dep.begin();
+    
+    int len = dep[T];
+    std::vector<int> D(len + 1);
+    
+    std::vector<bool> dia(n);
+    for (int i = T; i != -1; i = p[i]) {
+        D[dep[i]] = i;
+        dia[i] = true;
+    }
+    
+    std::cout << 2 << "\n";
+    std::cout << 3 << "\n";
+    {
+        std::vector<std::array<int, 3>> vec;
+        for (int x = 0; x < n; x++) {
+            for (int y = 0; y < x; y++) {
+                if (g[x][y]) {
+                    continue;
+                }
+                if (p[x] == p[y]) {
+                    vec.push_back({x, p[x], y});
+                } else if (p[x] != -1 && p[p[x]] == y) {
+                    vec.push_back({x, p[x], y});
+                } else if (p[y] != -1 && p[p[y]] == x) {
+                    vec.push_back({y, p[y], x});
+                }
+            }
+        }
+        std::cout << vec.size() << "\n";
+        for (auto [x, y, z] : vec) {
+            std::cout << x + 1 << " " << y + 1 << " " << z + 1 << "\n";
+            g[x][z] = g[z][x] = 1;
+        }
+    }
+    
+    int k = (len + 1) / 2;
+    std::cout << k + 1 << "\n";
+    
+    std::vector<std::vector<int>> ans;
+    
+    for (int x = 0; x < n; x++) {
+        for (int y = 0; y < x; y++) {
+            if (g[x][y]) {
+                continue;
+            }
+            
+            std::vector<int> L, R;
+            int a = x, b = y;
+            while (a != b) {
+                if (dep[a] > dep[b]) {
+                    L.push_back(a);
+                    a = p[a];
+                } else {
+                    R.push_back(b);
+                    b = p[b];
+                }
+            }
+            L.push_back(a);
+            
+            L.insert(L.end(), R.rbegin(), R.rend());
+            
+            if (L.size() >= k + 1) {
+                std::vector<int> path {L[0]};
+                int more = L.size() - k - 1;
+                int i = 0;
+                for (int t = 0; t < more; t++) {
+                    i += 2;
+                    path.push_back(L[i]);
+                }
+                for (int t = 0; t < k - more; t++) {
+                    i++;
+                    path.push_back(L[i]);
+                }
+                ans.push_back(path);
+                continue;
+            }
+            
+            L = {x};
+            R = {y};
+            a = x;
+            b = y;
+            
+            int vx = x, vy = y;
+            while (!dia[vx]) {
+                vx = p[vx];
+            }
+            while (!dia[vy]) {
+                vy = p[vy];
+            }
+            
+            if (vx != vy) {
+                while (!dia[a]) {
+                    a = p[a];
+                    L.push_back(a);
+                }
+                while (!dia[b]) {
+                    b = p[b];
+                    R.push_back(b);
+                }
+                if (dep[a] > dep[b]) {
+                    std::swap(a, b);
+                    std::swap(L, R);
+                }
+            } else {
+                while (((!dia[a] && !dia[b]) || ((!dia[a] || !dia[b]) && std::abs(dep[a] - dep[b]) > 1)) && L.size() + R.size() < k + 1) {
+                    if (dep[a] > dep[b]) {
+                        if (p[a] != b) {
+                            a = p[a];
+                        } else {
+                            a = p[p[a]];
+                        }
+                        L.push_back(a);
+                    } else {
+                        if (p[b] != a) {
+                            b = p[b];
+                        } else {
+                            b = p[p[b]];
+                        }
+                        R.push_back(b);
+                    }
+                }
+                if (L.size() + R.size() == k + 1) {
+                    L.insert(L.end(), R.rbegin(), R.rend());
+                    ans.push_back(L);
+                    continue;
+                }
+                
+                if (!dia[a]) {
+                    std::swap(a, b);
+                    std::swap(L, R);
+                }
+                
+                if (dep[a] > len - dep[a]) {
+                    b = p[a];
+                } else {
+                    b = D[dep[a] + 1];
+                }
+                R.push_back(b);
+                
+                if (dep[a] > dep[b]) {
+                    std::swap(a, b);
+                    std::swap(L, R);
+                }
+            }
+            
+            a = dep[a];
+            b = dep[b];
+            
+            if (a > len - b) {
+                while (b > a + 1) {
+                    b--;
+                    R.push_back(D[b]);
+                }
+                while (L.size() + R.size() < k + 1) {
+                    b -= 2;
+                    R.push_back(D[b]);
+                    std::swap(a, b);
+                    std::swap(L, R);
+                }
+            } else {
+                while (a < b - 1) {
+                    a++;
+                    L.push_back(D[a]);
+                }
+                while (L.size() + R.size() < k + 1) {
+                    a += 2;
+                    L.push_back(D[a]);
+                    std::swap(a, b);
+                    std::swap(L, R);
+                }
+            }
+            L.insert(L.end(), R.rbegin(), R.rend());
+            ans.push_back(L);
+        }
+    }
+    
+    std::cout << ans.size() << "\n";
+    for (auto v : ans) {
+        for (int i = 0; i <= k; i++) {
+            std::cout << v[i] + 1 << " \n"[i == k];
+        }
+    }
+}
+
+int main() {
+    std::ios::sync_with_stdio(false);
+    std::cin.tie(nullptr);
+    
+    int t;
+    std::cin >> t;
+    
+    while (t--) {
+        solve();
+    }
+    
+    return 0;
+}
