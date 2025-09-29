@@ -1,0 +1,56 @@
+#include <bits/stdc++.h>
+#define N 2000011
+using namespace std;
+int T,n,m;char s[N];
+const int p=1e9+7;
+vector<int> f[N];
+int sum[N],a[N],nxt[N];
+int main()
+{
+	scanf("%d",&T);while(T--)
+	{
+		scanf("%d%s",&n,s+1);
+		int lst=1;
+		a[0]=0;
+		for(int i=2;i<=n+1;++i)if(s[i]!=s[i-1])a[++a[0]]=i-lst,lst=i;
+		m=a[0];
+		if(m==1){printf("%d\n",a[m]-1);continue;}
+		for(int i=1;i<=m;++i)
+		{
+			f[i].clear();
+			f[i].resize(a[i]+1,0);
+		}
+		static vector<int> vs[2];
+		vs[0].clear();vs[1].clear();
+		for(int i=m-1;i;--i)
+		{
+			int o=i&1;
+			while(!vs[o].empty()&&a[vs[o].back()]-vs[o].back()/2<a[i]-i/2)vs[o].pop_back();
+			nxt[i]=vs[o].empty()?1e9:vs[o].back();
+			vs[o].push_back(i);
+		}
+		sum[m+2]=sum[m+1]=0;
+		f[m][0]=sum[m]=a[m];
+		for(int i=m-1;i;--i)
+		{
+			for(int j=a[i];~j;--j)
+			{
+				if(j<a[i])
+				{
+					f[i][j]=((!!j)*f[i+1][0]+f[i][j+1])%p;
+				}
+				else
+				{
+					if(i>1&&nxt[i]<=m)
+					{
+						f[i][j]=(0ll+f[i][j]+sum[i+1]-sum[nxt[i]+1]+f[nxt[i]][a[i]+(nxt[i]-i)/2])%p;
+					}
+					else f[i][j]=sum[i+1];
+				}
+			}
+			if(!(m-i&1)&&i>1)f[i][0]=(f[i][0]+a[m])%p;
+			sum[i]=(sum[i+2]+f[i][0])%p;
+		}
+		printf("%d\n",(sum[1]%p+p)%p);
+	}
+}
