@@ -1,0 +1,30 @@
+#include<bits/stdc++.h>
+using namespace std;
+typedef long double ld;
+typedef pair<ld,ld> point;
+const ld R=acosl(-1)/6;
+
+void solve(int x,int y){
+    ld d=atan2l(y,x),dis=hypotl(x,y),dx=cosl(d),dy=sinl(d);
+    vector<tuple<int,int,point>> ops;
+    auto op=[&](int x,int y,point z){return ops.emplace_back(x,y,z),(int)ops.size()-1;};
+    auto getx=[&](int i){return get<2>(ops[i]).first;};
+    auto gety=[&](int i){return get<2>(ops[i]).second;};
+    op(0,0,point(0,0));
+    int u=op(0,0,point(0,0)),v=op(0,0,point(1,0));
+    auto go=[&](int &x,ld t){x=op(u,v,point(getx(x)+dx*t,gety(x)+dy*t));};
+    if(d>R*2)v=op(u,v,point(cosl(d-R),sinl(d-R)));
+    else if(d<R)v=op(u,v,point(cosl(d+R),sinl(d+R)));
+    while(dis>2)go(u,1),go(v,1),dis-=1;
+    if(R<=d&&d<=R*2||dis>1.5)go(u,dis/2),go(v,dis/2),go(u,dis/2);
+    else go(u,dis/2),go(u,dis/2);
+    ops.erase(ops.begin(),ops.begin()+3);
+    printf("%d\n",(int)ops.size());
+    for(auto [u,v,p] :ops)printf("%d %d %.10Lf %.10Lf\n",u,v,p.first,p.second);
+}
+
+int main(){
+    int T,x,y; scanf("%d",&T);
+    while(T--)scanf("%d%d%*d",&x,&y),solve(x,y);
+    return 0;
+}
