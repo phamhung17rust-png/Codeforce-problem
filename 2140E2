@@ -1,0 +1,35 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int mod=1000000007;
+int t,n,m,k,num[25];
+bool f[2097152],g[2097152];
+template<typename T>T qpow(T a,T b,T n,T ans=1){
+  for(a%=n;b;b>>=1)b&1&&(ans=1ll*ans*a%n),a=1ll*a*a%n;
+  return ans;
+}
+int main(){
+  cin>>t;
+  while(t--){
+    f[0]=0,f[1]=1,cin>>n>>m>>k;
+    int type=0;
+    for(int i=1,c;i<=k;i++)cin>>c,type|=1<<(c-1);
+    for(int i=2;i<=n;i++){
+      for(int s=0;s<1<<i;s++)g[s]=0;
+      for(int s=0;s<1<<i;s++){
+        for(int j=0;j<i;j++){
+          if(~type>>j&1)continue;
+          int t=s>>(j+1)<<j|(s&((1<<j)-1));
+          if((n-i)&1)g[s]|=!f[t];
+          else g[s]|=f[t];
+        }
+        g[s]^=(n-i)&1;
+      }
+      for(int s=0;s<1<<i;s++)f[s]=g[s];
+    }
+    for(int i=0;i<1<<n;i++)num[__builtin_popcount(i)]+=f[i];
+    int ans=0;
+    for(int i=1;i<=m;i++)for(int j=0;j<=n;j++)ans=(ans+1ll*num[j]*qpow(m-i+1,j,mod)%mod*qpow(i-1,n-j,mod))%mod;
+    cout<<ans<<'\n',memset(num,0,sizeof(num));
+  }
+  return 0;
+}
