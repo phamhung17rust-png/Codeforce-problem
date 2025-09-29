@@ -1,0 +1,147 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define int long long
+const int N=1e6+5;
+struct node{
+	int l,r,bh;
+	friend bool operator<(node a,node b){
+		return a.r<b.r;
+	}
+}p[N];
+int t,n,op,rs[N],m,qz[N],mk[N],f[N],lst[N],f1[N],f2[N],q1[N],q2[N];
+vector<int>ad[N],dl[N];
+void solve(){
+	for(int i=1;i<=m;i++)qz[i]=0;
+	for(int i=1;i<=n;i++)mk[i]=0;
+	for(int i=1;i<=n;i++){
+		if(p[i].r>p[qz[p[i].l]].r)qz[p[i].l]=i;
+	}
+	for(int i=1;i<=m;i++){
+		if(p[qz[i-1]].r>p[qz[i]].r)qz[i]=qz[i-1];
+	}
+	int nw=p[qz[1]].r+1;
+	mk[p[qz[1]].bh]=1;
+	rs[p[qz[1]].bh]=0;
+	int op=0;
+	while(nw<=m){
+		mk[p[qz[nw]].bh]=1;
+		op^=1;
+		rs[p[qz[nw]].bh]=op;
+		nw=p[qz[nw]].r+1;
+	}
+	cout<<"3\n";
+	for(int i=1;i<=n;i++)if(mk[i])cout<<rs[i]+1<<" ";else cout<<"3 ";
+	cout<<"\n";
+}
+bool solve2(){
+	set<int>q;
+	for(int i=1;i<=m+1;i++)ad[i].clear(),dl[i].clear();
+	for(int i=1;i<=n;i++){
+		ad[p[i].l].push_back(i);
+		dl[p[i].r].push_back(i);
+	}
+	for(int i=1;i<=n;i++){
+		lst[i]=0;
+		if(p[i].l==1)f[i]=1;
+		else f[i]=0;
+	}
+	for(int i=1;i<=m;i++){
+		int wz=0;
+		for(auto c:dl[i]){
+			if(f[c])wz=c;
+		}
+		if(wz){
+			for(auto c:ad[i+1]){
+				f[c]=i+1;
+				lst[c]=wz;
+			}
+		}
+		for(auto c:ad[i])q.insert(c);
+		for(auto c:dl[i])q.erase(q.find(c));
+		auto chk=[&](int a,int b){
+			if(f[a]&&f[a]<=i){
+				if(!f[b]||f[b]>i)f[b]=i+1,lst[b]=a;
+			}
+		};
+		if(q.size()==2){
+			int a=*q.begin(),b=*next(q.begin());
+			chk(a,b);chk(b,a);
+		}
+		if(q.size()==1){
+			int a=*q.begin();
+			for(auto c:dl[i])chk(c,a);
+			for(auto c:ad[i+1])chk(a,c);
+		}
+	}
+	for(int i=1;i<=n;i++){
+		if(p[i].r!=m)continue;
+		if(!f[i])continue;
+		int nw=i,op=0;
+		for(int j=1;j<=n;j++)mk[j]=0;
+		vector<pair<int,int> >qq;
+		while(nw){
+			rs[p[nw].bh]=op;
+			qq.push_back({f[nw],op});
+			mk[nw]=1;
+			if(p[lst[nw]].r!=p[nw].l-1)op^=1;
+			nw=lst[nw];
+		}
+		reverse(qq.begin(),qq.end());
+		for(int j=1;j<=n;j++){
+			if(!mk[j]){
+				rs[p[j].bh]=(*(--upper_bound(qq.begin(),qq.end(),pair<int,int>{p[j].l,2}))).second^1;
+			}
+		}
+		cout<<"2\n";
+		for(int j=1;j<=n;j++)cout<<rs[j]+1<<" ";
+		cout<<"\n";
+		return 1;
+	}
+	return 0;
+}
+signed main(){
+//	freopen("Iexiyvv.in","r",stdin);
+//	freopen("Iexiyvv.out","w",stdout);
+	ios::sync_with_stdio(0);
+	cin.tie(0);cout.tie(0);
+	cin>>t;
+	while(t--){
+		cin>>n;
+		vector<int>jl;
+		map<int,int>qs;
+		for(int i=1;i<=n;i++){
+			cin>>p[i].l>>p[i].r,p[i].bh=i;
+			qs[p[i].l]++;
+			qs[p[i].r+1]--;
+			qs[p[i].l-1];qs[p[i].r];
+			jl.push_back(p[i].l);
+			jl.push_back(p[i].r);
+		}
+		int nw=0;
+		for(auto [a,b]:qs){
+			nw+=b;
+			if(nw>1)jl.push_back(a);
+		}
+		sort(jl.begin(),jl.end());
+		jl.resize(unique(jl.begin(),jl.end())-jl.begin());
+		m=jl.size();
+		auto fd=[&](int x){
+			return lower_bound(jl.begin(),jl.end(),x)-jl.begin()+1;
+		};
+		for(int i=1;i<=n;i++){
+		    p[i]={fd(p[i].l),fd(p[i].r),p[i].bh};
+		}
+		sort(p+1,p+n+1);
+		int oks=1;
+		for(int i=1;i<=n;i++){
+			if(p[i-1].r>=p[i].l)oks=0;
+		}
+		if(oks){
+			cout<<"1\n";
+			for(int i=1;i<=n;i++)cout<<"1 ";
+			cout<<"\n";
+			continue; 
+		}
+		if(!solve2())solve();
+	}
+}
