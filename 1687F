@@ -1,0 +1,173 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N = 1e6+7;
+typedef long long LL;
+const int mod = 998244353;
+LL Pow(LL a,LL b)
+{
+LL res=1;
+while(b)
+{
+if(b&1)res=res*a%mod;
+a=a*a%mod;
+b>>=1;
+}
+return res;
+}
+LL G=3,IG=Pow(G,mod-2);
+int tr[N];
+#define Poly vector<LL>
+#define len(x) (int)x.size()
+#define turn(x,v) x.resize(v)
+void put(Poly f)
+{
+cout<<"====="<<endl;
+for(int i=0;i<len(f);i++)
+cout<<f[i]<<' ';
+cout<<endl;
+cout<<"====="<<endl;
+}
+void Retry(int n)
+{
+for(int i=0;i<n;i++)
+tr[i]=((tr[i>>1]>>1)|((i&1)?n>>1:0));
+}
+void NTT(Poly &f,int opt)
+{
+int n=len(f);
+for(int i=0;i<n;i++)
+if(i<tr[i]) swap(f[i],f[tr[i]]);
+for(int len=2;len<=n;len<<=1)
+{
+LL w=Pow(opt==1?G:IG,(mod-1)/len);
+int l=(len>>1);
+for(int i=0;i<n;i+=len)
+{
+LL g=1;
+for(int j=i;j<i+l;j++)
+{
+LL v=g*f[j+l]%mod;
+f[j+l]=(f[j]-v+mod)%mod;
+f[j]=(f[j]+v)%mod;
+g=g*w%mod;
+}
+}
+}}
+Poly Mul(Poly f,Poly g)
+{
+int n=len(f),m=len(g);
+int len=1;
+for(;len<=n+m-1;len<<=1);
+Retry(len);
+turn(f,len);turn(g,len);
+NTT(f,1);NTT(g,1);
+for(int i=0;i<len;i++)
+f[i]=f[i]*g[i]%mod;
+NTT(f,-1);
+LL invn=Pow(len,mod-2);
+for(int i=0;i<len;i++)
+f[i]=f[i]*invn%mod;
+turn(f,n+m-1);
+return f;}
+LL fac[N],ifac[N];
+LL inv[N];
+void init(int n)
+{
+fac[0]=1;
+for(int i=1;i<=n;i++)
+fac[i]=fac[i-1]*i%mod;
+ifac[n]=Pow(fac[n],mod-2);
+for(int i=n-1;i>=0;i--)
+ifac[i]=ifac[i+1]*(i+1)%mod;
+inv[1]=1;
+for(int i=2;i<=n;i++)
+inv[i]=inv[mod%i]*(mod-mod/i)%mod;
+}
+LL pw(LL n)
+{
+if(n&1) return mod-1;
+return 1;}
+Poly Add(Poly f,Poly g)
+{
+int len=max(len(f),len(g));
+turn(f,len);turn(g,len);
+for(int i=0;i<len;i++)
+f[i]=(f[i]+g[i])%mod;
+return f;}
+Poly Stiring(int n)
+{
+Poly f(n+1),g(n+1);
+for(int i=0;i<=n;i++)
+{f[i]=(LL)Pow(i,n)*ifac[i]%mod;
+g[i]=pw(i)*ifac[i]%mod;}
+f=Mul(f,g);
+for(int i=0;i<=n;i++)
+f[i]=f[i]*fac[i]%mod;
+turn(f,n+1);
+return f;
+}
+struct node
+{
+Poly f,A,B,C; };
+Poly S;
+Poly Fill(Poly f,int cnt)
+{
+f.insert(f.begin(),cnt,0);
+return f;}
+node get(int l,int r)
+{
+if(r==l+1)
+{
+node ans;
+turn(ans.f,2);ans.f[1]=mod-inv[r];ans.f[0]=(LL)l*ans.f[1]%mod;
+turn(ans.A,2);ans.A[1]=S[r];
+ans.B=ans.f;
+turn(ans.C,2);
+ans.C[0]=(LL)ans.f[0]*S[r]%mod;
+ans.C[1]=(LL)ans.f[1]*S[r]%mod;
+return ans;}
+int mid=(l+r)>>1;
+node L=get(l,mid);
+node R=get(mid,r);
+node ans;
+ans.f=Mul(L.f,R.f);
+ans.A=Add(L.A,Fill(R.A,mid-l));
+ans.B=Add(Fill(L.B,r-mid),Mul(R.B,L.f)) ;
+ans.C=Add(Add(L.C,Mul(R.C,L.f)),Mul(L.B,R.A));
+return ans;}
+Poly solve(int n)
+{
+S=Stiring(n);
+node F=get(0,n);
+Poly f=Add(F.A,F.C);
+Poly g(n+1);
+for(int i=0;i<=n;i++)
+{
+f[i]=(LL)f[i]*fac[n-i]%mod;
+g[i]=pw(i)*ifac[i]%mod;}
+f=Mul(f,g);
+for(int i=0;i<=n;i++)
+f[i]=(LL)f[i]*ifac[n-i]%mod;
+return f;}
+int n,s;
+LL C(int n,int m)
+{
+if(n<m) return 0;
+return fac[n]*ifac[m]%mod*ifac[n-m]%mod;}
+int main()
+{
+cin>>n>>s;
+init(N-1);
+LL k=C(n-1,s);
+n-=s;
+if(n==1)
+{
+for(int i=0;i<s;i++){printf("0 ");}
+printf("1\n");
+return 0;}
+Poly ans=Add(solve(n),solve(n-1));
+for(int i=0;i<s;i++)
+printf("0 ");
+for(int i=n-1;i>=0;i--)
+printf("%lld ",(LL)ans[i]*k%mod);
+return 0;}
