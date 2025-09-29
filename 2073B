@@ -1,0 +1,58 @@
+#include <bits/stdc++.h>
+using namespace std;
+#define F(i,a,b) for(int i=a;i<b;++i)
+#define X first
+#define Y second
+#define G(i) ((i%133)*3)
+#define H(i) ((i/133)*5)
+#define B bitset<133>
+#define V vector
+#define PB push_back
+#define A array<int,3>
+typedef V<A> P;
+typedef V<P> PP;
+typedef V<PP> PPP;
+P E(int u,int h,int i,PPP&g){
+    P r=g[u].back();g[u].pop_back();
+    r.PB(r.back());r.back()[2]=(h<<1)+2;
+    r.PB(r.back());++r.back()[0];
+    r.PB(r.back());r.back()[1]=i;
+    r.PB(r.back());--r.back()[2];return r;
+}
+int main(){
+    ios_base::sync_with_stdio(0);cin.tie(0);
+    const int M=133,S=200;int n,m,u,v,h,x,y;
+    cin>>n>>m;
+    PPP g(n);PP o;V<B>d(S);V<int>I(S,75);
+    F(i,0,n){
+        x=G(i);y=H(i);cout<<x+1<<' '<<y+2<<'\n';
+        g[i]={{{x+1,y+2,0},{x+2,y+2,0},{x+2,y+0,0},{x+1,y+0,0}},
+              {{x+1,y+2,0},{x+1,y+1,0}},
+              {{x+1,y+2,0}},
+              {{x+1,y+2,0},{x+1,y+3,0}},
+              {{x+1,y+2,0},{x+0,y+2,0},{x+0,y+4,0},{x+1,y+4,0}}};
+    }
+    while(m--){
+        cin>>u>>v;--u;--v;h=0;
+        while(d[h][u%M]||d[h][v%M])++h;
+        P a,b;
+        if((u%M)!=(v%M)){
+            a=E(u,h,I[h],g);
+            b=E(v,h,I[h],g);
+        }else{
+            a=E(u,h,H(u),g);
+            b=E(v,h,H(v),g);
+            a.pop_back();a.pop_back();
+            b.pop_back();b.pop_back();
+        }
+        reverse(b.begin(),b.end());
+        a.insert(a.end(),b.begin(),b.end());
+        o.PB(a);d[h][u%M]=d[h][v%M]=1;++I[h];
+    }
+    for(const auto&p:o){
+        cout<<p.size()<<' ';
+        for(const auto&q:p)cout<<q[0]<<' '<<q[1]<<' '<<q[2]<<' ';
+        cout<<'\n';
+    }
+    return 0;
+}
