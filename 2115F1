@@ -1,0 +1,137 @@
+#include<bits/stdc++.h>
+using namespace std;
+const int N=3e5+10,M=650;
+struct nod{
+	int l,r,op,siz;
+	bitset<M>vis;
+};
+int n,m;
+int Bel[N],B=600,tot=1,id[N],tmp[N],del[N];
+struct Nod{
+	vector<nod>z;
+	short bel[N];int L;
+	int split(int r){
+		int h=0,I=0;
+		for(int i=0;i<z.size();i++){
+			if(h+z[i].r-z[i].l+1>=r){I=i;break;}
+			h+=z[i].r-z[i].l+1;
+		}h=r-h;
+		if(z[I].op==0){
+			int L=z[I].l,R=z[I].l+h-1;
+			z[I].l=z[I].l+h;
+			z.insert(z.begin()+I,nod{L,R,0,z[I].siz,z[I].vis});
+		}
+		else{
+			int L=z[I].r-h+1,R=z[I].r;
+			z[I].r=z[I].r-h;
+			z.insert(z.begin()+I,nod{L,R,1,z[I].siz,z[I].vis});
+		}
+		return I;
+	}
+	void Reverse(int r){
+		int I=split(r);
+		reverse(z.begin(),z.begin()+I+1);
+		for(int i=0;i<=I;i++)z[i].op^=1;
+	}
+	void Insert(int r,int x){
+		int I=split(r);
+		for(int i=0;i<=I;i++)z[i].siz++,z[i].vis[x]=1;
+	}
+	void rebuild(){
+		int Tmp=0;
+		for(int i=0;i<z.size();i++){
+			if(z[i].op==0){
+				for(int j=z[i].l;j<=z[i].r;j++){
+					bel[id[j]]=i;
+					tmp[++Tmp]=id[j];
+				}
+			}
+			else{
+				for(int j=z[i].r;j>=z[i].l;j--){
+					bel[id[j]]=i;
+					tmp[++Tmp]=id[j];
+				}	
+			}
+		}
+		for(int i=1;i<=n;i++)id[i]=tmp[i];
+	}
+	int Get_id(int r){
+		int h=0,I=0;
+		for(int i=0;i<z.size();i++){
+			if(h+z[i].r-z[i].l+1>=r){
+				h=r-h;
+				if(z[i].op==0)return id[z[i].l+h-1];
+				return id[z[i].r-h+1];
+			}
+			h+=z[i].r-z[i].l+1;
+		}
+	}
+}Q[M];
+void Erase(int x){
+	int I=Bel[x];
+	x=x-Q[I].L;
+	for(int i=0;i<Q[I].z.size();i++){
+		if(Q[I].z[i].vis[x]==1){
+			Q[I].z[i].vis[x]=0;
+			Q[I].z[i].siz--;
+		}
+	}
+}
+int query(int x){
+	int Id=Q[tot].Get_id(x);
+	for(int I=1;I<tot;I++){
+		int i=Q[I].bel[Id];
+		if(Q[I].z[i].siz!=0){
+			return Q[I].z[i].vis._Find_first()+Q[I].L;
+		}
+	}
+	int I=tot,h=0;
+	for(int i=0;i<Q[I].z.size();i++){
+		if(h+Q[I].z[i].r-Q[I].z[i].l+1>=x){
+			if(Q[I].z[i].siz==0)return 0;
+			return Q[I].z[i].vis._Find_first()+Q[I].L;
+		}
+		h+=Q[I].z[i].r-Q[I].z[i].l+1;
+	}
+}
+int main(){
+	ios::sync_with_stdio(0);
+	cin.tie(0); cout.tie(0);
+	
+	cin>>n>>m;
+	int last=0;
+	Q[1].z.emplace_back(nod{1,n,0,0});Q[1].L=0;
+	for(int i=1;i<=n;i++)id[i]=i;
+	for(int i=1;i<=m;i++){
+		int op,r,I;
+		cin>>op>>r>>I;
+		if(op==1){
+			r=(r+last-1)%n+1;Bel[i]=tot;
+			Q[tot].Insert(r,i-Q[tot].L);
+		}
+		if(op==2){
+			r=(r+last-1)%n+1;
+			Q[tot].Reverse(r);
+		}
+		if(op==3){
+			r=(r+last-1)%m+1;
+			Erase(r);del[r]=1;
+		}
+		I=(I+last-1)%n+1;
+		last=query(I);
+		cout<<last<<"\n";
+		if(i%B==0){
+			Q[tot].rebuild();
+			tot++;
+			Q[tot].z.emplace_back(nod{1,n,0,0});Q[tot].L=i;
+		}
+	}
+	return 0;
+}
+/*
+2000 4
+2 1784 1252
+1 1676 913
+3 2000 1921
+3 3 1244
+*/
