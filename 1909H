@@ -1,0 +1,51 @@
+#include<bits/stdc++.h>
+using namespace std;
+namespace Fread { const int SIZE = 1 << 18; char buf[SIZE], *S, *T;
+	inline char getchar() { if (S == T) { T = (S = buf) + fread(buf, 1, SIZE, stdin);
+			if (S == T) return '\n'; } return *S++; } } 
+namespace Fwrite { const int SIZE = 1 << 20; char buf[SIZE], *S = buf, *T = buf + SIZE;
+	inline void flush() { fwrite(buf, 1, S - buf, stdout); S = buf; }
+	inline void putchar(char c) { *S++ = c; if (S == T) flush(); }
+	struct NTR { ~ NTR() { flush(); }} ztr; } 
+#define getchar Fread :: getchar
+#define putchar Fwrite :: putchar
+namespace Fastio {
+	struct Reader { template<typename T> Reader& operator >> (T& x) { 
+			char c = getchar(); while (!isdigit(c)) c = getchar(); x = 0; 
+			while (isdigit(c)) x = x * 10 + (c - '0'), c = getchar(); return *this; } } cin;
+	struct Writer { template<typename T> Writer& operator << (T x) {
+			if (x == 0) { putchar('0'); return *this; }
+			static int sta[45]; int top = 0; while (x) { sta[++top] = x % 10; x /= 10; }
+			while (top) { putchar(sta[top] + '0'); --top; } return *this; }
+		Writer& operator << (char c) { putchar(c); return *this; } } cout; } 
+#define cin Fastio :: cin
+#define cout Fastio :: cout
+#define rep(i,j,k) for(int i=j;i<=k;i++)
+#define pi pair<int,int>
+#define f first
+#define s second
+const int N=3e5; 
+int n, p[N], invp[N], prep[N];
+signed main(){ cin>>n;
+    rep(i,0,n-1) cin>>p[i], p[i]--, invp[p[i]]=i, prep[i]=i; 
+    rep(i,0,n-1){ int x=i; 
+        while(p[p[x]]!=x) {
+            swap(invp[p[x]],invp[p[p[p[x]]]]); 
+            swap(prep[x],prep[p[p[x]]]); 
+            swap(p[x],p[p[p[x]]]); x=invp[x]; } }
+    vector<pi> ans; ans.reserve(3*n);
+	auto work=[&](int a[], int opt){ vector<int> vec[N];
+	    rep(k,0,n-1) if(a[k]!=k){ int x=k, y=a[k];
+	        if(opt) x=n-1-x, y=n-1-y; if(x>y) swap(x,y);
+	        int turn=((y-x)%2 ? (y-x+1)/2 : (2*n-y-x)/2);
+	        if(x%2) turn=n+1-turn;
+	        int pos=turn; x%2 ? pos-=x+1 : pos+=x;
+	        vec[turn-1].push_back(pos); 
+	        swap(a[k], a[a[k]]); }
+	    rep(j,0,n-1){ int l=j%2, r=n; if((r-l)%2) r--; 
+	        if(l<r) ans.push_back({l+1,r}); 
+	        for(auto p2:vec[j]) ans.push_back({p2,p2+1}); } };
+    work(prep,0); 
+    work(p,1); 
+    cout<<ans.size()<<'\n'; for(auto t:ans) cout<<t.f<<' '<<t.s<<'\n'; 
+} // Tribute to Jiangly
