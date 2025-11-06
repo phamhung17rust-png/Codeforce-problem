@@ -1,0 +1,395 @@
+#include <bits/stdc++.h>
+using namespace std;
+
+namespace atcoder {
+
+	namespace internal {
+	
+	#if __cplusplus >= 202002L
+	
+	using std::bit_ceil;
+	
+	#else
+	
+	
+	unsigned int bit_ceil(unsigned int n) {
+		unsigned int x = 1;
+		while (x < (unsigned int)(n)) x *= 2;
+		return x;
+	}
+	
+	#endif
+	
+	
+	int countr_zero(unsigned int n) {
+	#ifdef _MSC_VER
+		unsigned long index;
+		_BitScanForward(&index, n);
+		return index;
+	#else
+		return __builtin_ctz(n);
+	#endif
+	}
+	
+	
+	
+	constexpr int countr_zero_constexpr(unsigned int n) {
+		int x = 0;
+		while (!(n & (1 << x))) x++;
+		return x;
+	}
+	
+	}  
+	
+	}  
+	
+	
+	namespace atcoder {
+	
+	#if __cplusplus >= 201703L
+	
+	template <class S,
+			  auto op,
+			  auto e,
+			  class F,
+			  auto mapping,
+			  auto composition,
+			  auto id>
+	struct lazy_segtree {
+		static_assert(std::is_convertible_v<decltype(op), std::function<S(S, S)>>,
+					  "op must work as S(S, S)");
+		static_assert(std::is_convertible_v<decltype(e), std::function<S()>>,
+					  "e must work as S()");
+		static_assert(
+			std::is_convertible_v<decltype(mapping), std::function<S(F, S)>>,
+			"mapping must work as S(F, S)");
+		static_assert(
+			std::is_convertible_v<decltype(composition), std::function<F(F, F)>>,
+			"composition must work as F(F, F)");
+		static_assert(std::is_convertible_v<decltype(id), std::function<F()>>,
+					  "id must work as F()");
+	
+	#else
+	
+	template <class S,
+			  S (*op)(S, S),
+			  S (*e)(),
+			  class F,
+			  S (*mapping)(F, S),
+			  F (*composition)(F, F),
+			  F (*id)()>
+	struct lazy_segtree {
+	
+	#endif
+	
+	  public:
+		lazy_segtree() : lazy_segtree(0) {}
+		explicit lazy_segtree(int n) : lazy_segtree(std::vector<S>(n, e())) {}
+		explicit lazy_segtree(const std::vector<S>& v) : _n(int(v.size())) {
+			size = (int)internal::bit_ceil((unsigned int)(_n));
+			log = internal::countr_zero((unsigned int)size);
+			d = std::vector<S>(2 * size, e());
+			lz = std::vector<F>(size, id());
+			for (int i = 0; i < _n; i++) d[size + i] = v[i];
+			for (int i = size - 1; i >= 1; i--) {
+				update(i);
+			}
+		}
+	
+		void set(int p, S x) {
+			assert(0 <= p && p < _n);
+			p += size;
+			for (int i = log; i >= 1; i--) push(p >> i);
+			d[p] = x;
+			for (int i = 1; i <= log; i++) update(p >> i);
+		}
+	
+		S get(int p) {
+			assert(0 <= p && p < _n);
+			p += size;
+			for (int i = log; i >= 1; i--) push(p >> i);
+			return d[p];
+		}
+	
+		S prod(int l, int r) {
+			assert(0 <= l && l <= r && r <= _n);
+			if (l == r) return e();
+	
+			l += size;
+			r += size;
+	
+			for (int i = log; i >= 1; i--) {
+				if (((l >> i) << i) != l) push(l >> i);
+				if (((r >> i) << i) != r) push((r - 1) >> i);
+			}
+	
+			S sml = e(), smr = e();
+			while (l < r) {
+				if (l & 1) sml = op(sml, d[l++]);
+				if (r & 1) smr = op(d[--r], smr);
+				l >>= 1;
+				r >>= 1;
+			}
+	
+			return op(sml, smr);
+		}
+	
+		S all_prod() { return d[1]; }
+	
+		void apply(int p, F f) {
+			assert(0 <= p && p < _n);
+			p += size;
+			for (int i = log; i >= 1; i--) push(p >> i);
+			d[p] = mapping(f, d[p]);
+			for (int i = 1; i <= log; i++) update(p >> i);
+		}
+		void apply(int l, int r, F f) {
+			assert(0 <= l && l <= r && r <= _n);
+			if (l == r) return;
+	
+			l += size;
+			r += size;
+	
+			for (int i = log; i >= 1; i--) {
+				if (((l >> i) << i) != l) push(l >> i);
+				if (((r >> i) << i) != r) push((r - 1) >> i);
+			}
+	
+			{
+				int l2 = l, r2 = r;
+				while (l < r) {
+					if (l & 1) all_apply(l++, f);
+					if (r & 1) all_apply(--r, f);
+					l >>= 1;
+					r >>= 1;
+				}
+				l = l2;
+				r = r2;
+			}
+	
+			for (int i = 1; i <= log; i++) {
+				if (((l >> i) << i) != l) update(l >> i);
+				if (((r >> i) << i) != r) update((r - 1) >> i);
+			}
+		}
+	
+		template <bool (*g)(S)> int max_right(int l) {
+			return max_right(l, [](S x) { return g(x); });
+		}
+		template <class G> int max_right(int l, G g) {
+			assert(0 <= l && l <= _n);
+			assert(g(e()));
+			if (l == _n) return _n;
+			l += size;
+			for (int i = log; i >= 1; i--) push(l >> i);
+			S sm = e();
+			do {
+				while (l % 2 == 0) l >>= 1;
+				if (!g(op(sm, d[l]))) {
+					while (l < size) {
+						push(l);
+						l = (2 * l);
+						if (g(op(sm, d[l]))) {
+							sm = op(sm, d[l]);
+							l++;
+						}
+					}
+					return l - size;
+				}
+				sm = op(sm, d[l]);
+				l++;
+			} while ((l & -l) != l);
+			return _n;
+		}
+	
+		template <bool (*g)(S)> int min_left(int r) {
+			return min_left(r, [](S x) { return g(x); });
+		}
+		template <class G> int min_left(int r, G g) {
+			assert(0 <= r && r <= _n);
+			assert(g(e()));
+			if (r == 0) return 0;
+			r += size;
+			for (int i = log; i >= 1; i--) push((r - 1) >> i);
+			S sm = e();
+			do {
+				r--;
+				while (r > 1 && (r % 2)) r >>= 1;
+				if (!g(op(d[r], sm))) {
+					while (r < size) {
+						push(r);
+						r = (2 * r + 1);
+						if (g(op(d[r], sm))) {
+							sm = op(d[r], sm);
+							r--;
+						}
+					}
+					return r + 1 - size;
+				}
+				sm = op(d[r], sm);
+			} while ((r & -r) != r);
+			return 0;
+		}
+	
+	  private:
+		int _n, size, log;
+		std::vector<S> d;
+		std::vector<F> lz;
+	
+		void update(int k) { d[k] = op(d[2 * k], d[2 * k + 1]); }
+		void all_apply(int k, F f) {
+			d[k] = mapping(f, d[k]);
+			if (k < size) lz[k] = composition(f, lz[k]);
+		}
+		void push(int k) {
+			all_apply(2 * k, lz[k]);
+			all_apply(2 * k + 1, lz[k]);
+			lz[k] = id();
+		}
+	};
+	
+}  
+
+using S = pair<int,int>;
+using F = int;
+
+S op(S x, S y) { return max(x, y); }
+S e(){ return {-1e9, -1}; }
+S mapping(F f, S x) { return {x.first + f, x.second}; }
+F composition(F f, F g) { return f + g; }
+F id() { return 0; }
+	
+using ll = int64_t;
+
+void solve(){
+	auto solve_single = [&](vector<int> A, vector<int> B, ll K) -> pair<vector<int>, vector<int>> {
+		bool swapped = false;
+		if(A.size() > B.size()){
+			swapped = true;
+			swap(A, B);
+			for(int& x : A) x = -x;
+			for(int& x : B) x = -x;
+		}
+
+		int N = (int)A.size();
+		int M = (int)B.size();
+		assert(N <= M);
+		{
+			vector<vector<int> > elements = {A, B};
+			vector<int> sorted_elements;
+			for(auto v : elements) sorted_elements.insert(sorted_elements.end(), v.begin(), v.end());
+			sort(sorted_elements.rbegin(), sorted_elements.rend());
+			vector<pair<int,int> > new_order;
+			for(int i = 0; i < M; i++){
+				int orig_idx = (ll(i) * N) % M;
+				if(orig_idx < N){
+					new_order.push_back({0, orig_idx});
+				}
+				new_order.push_back({1, orig_idx});
+			}
+			vector<int> ord(N+M);
+			for(int i = 0; i < N+M; i++) ord[i] = i;
+			sort(ord.begin(), ord.end(), [&](int x, int y){
+				return elements[new_order[x].first][new_order[x].second] > elements[new_order[y].first][new_order[y].second];
+			});
+			int P = N+M;
+			atcoder::lazy_segtree<S, op, e, F, mapping, composition, id> seg(3*P+1);
+			for(int i = 0; i <= 3*P; i++){
+				seg.set(i, {0, i});
+			}
+
+			auto upd_all = [&](int i, int del){
+				i %= P;
+				seg.apply(i+1, 3*P+1, del);
+				seg.apply(i+P+1, 3*P+1, del);
+				seg.apply(i+2*P+1, 3*P+1, del);
+			};
+			auto assign = [&](int idx, int element){
+				elements[new_order[idx].first][new_order[idx].second] = element;
+			};
+			for(int i = 0; i < N+M; i++){
+				if(new_order[i].first == 1){
+					upd_all(i, 1);
+				}
+			}
+
+			int invN = -1;
+			for(int i = 0; i < M; i++){
+				if((ll(i) * N - 1) % M == 0) invN = i;
+			}
+			assert(invN >= 0);
+			for(int t = 0; t < N+M; t++){
+				int element = sorted_elements[t];
+				int idx = ord[t];
+				auto [max_val, l] = seg.prod(0, idx+P+1);
+				assert(idx < l);
+				int r = seg.max_right(idx+P+1, [&](S v) -> bool {
+					return v.first < max_val + 1;
+				});
+				int lidx = l % P;
+				if(r == 3*P+1){
+					assign(lidx, element);
+					if(idx != lidx){
+						upd_all(lidx, 1);
+						upd_all(idx, -1);
+					}
+				} else {
+					int ridx = (r-1) % P;
+					assert(new_order[ridx].first == 1);
+					ll reach_time = 0;
+					if(new_order[lidx].first == 1){
+						assert(lidx == ridx);
+						reach_time = -1;
+					} else {
+						reach_time = new_order[lidx].second;
+						reach_time += N * (ll(invN) * ll(new_order[ridx].second - new_order[lidx].second + M) % M);
+					}
+					if(reach_time < K){
+						assign(ridx, element);
+						upd_all(idx, -1);
+					} else {
+						assign(lidx, element);
+						upd_all(lidx, 1);
+						upd_all(idx, -1);
+					}
+				}
+			}
+			A = elements[0];
+			B = elements[1];
+		}
+
+		if(swapped){
+			swap(A, B);
+			for(int& x : A) x = -x;
+			for(int& x : B) x = -x;
+		}
+		return {A, B};
+	};
+	int N, M;
+	ll K;
+	cin >> N >> M >> K;
+	vector<int> A(N), B(M);
+	for(int i = 0; i < N; i++) cin >> A[i];
+	for(int i = 0; i < M; i++) cin >> B[i];
+	int G = gcd(N, M);
+	for(int i = 0; i < G; i++){
+		vector<int> a(N / G);
+		vector<int> b(M / G);
+		ll k = (K + G-1-i) / G;
+		for(int x = i; x < N; x += G) a[x/G] = A[x];
+		for(int x = i; x < M; x += G) b[x/G] = B[x];
+		tie(a, b) = solve_single(a, b, k);
+		for(int x = i; x < N; x += G) A[x] = a[x/G];
+		for(int x = i; x < M; x += G) B[x] = b[x/G];
+	}
+	for(int i = 0; i < N; i++) cout << A[i] << " \n"[i+1 == N];
+	for(int i = 0; i < M; i++) cout << B[i] << " \n"[i+1 == M];
+}
+
+int main(){
+	ios_base::sync_with_stdio(false), cin.tie(nullptr);
+	int T;
+	cin >> T;
+	while(T--) solve();
+}
+//hungcodeforce
