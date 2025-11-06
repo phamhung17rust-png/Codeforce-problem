@@ -1,0 +1,123 @@
+
+#include <bits/stdc++.h>
+
+using namespace std;
+
+#ifdef LOCAL
+#include "algo/debug.h"
+#else
+#define debug(...) 42
+#endif
+
+int main() {
+  ios::sync_with_stdio(false);
+  cin.tie(nullptr);
+  int tt;
+  cin >> tt;
+  while (tt--) {
+    int n, m;
+    cin >> n >> m;
+    vector g(n, vector<int>(n));
+    vector<pair<int, int>> pos(n * n);
+    for (int i = 0; i < n; i++) {
+      for (int j = 0; j < n; j++) {
+        cin >> g[i][j];
+        --g[i][j];
+        pos[g[i][j]] = {i, j};
+      }
+    }
+    vector a(n + 1, vector<int>(2 * n - 1, -1));
+    vector b(n + 1, vector<int>(2 * n - 1, 0));
+    for (int len = 1; len <= n; len++) {
+      int mx = -1;
+      for (int j = 0; j < len; j++) {
+        mx = max(mx, g[0][j]);
+        b[len][len - 1 - j] = max(b[len][len - 1 - j], mx);
+      }
+      a[len][0] = b[len][0];
+    }
+    int Q = 0;
+    auto Ask = [&](int len, int t) -> int {
+      if (a[len][t] != -1) {
+        return a[len][t];
+      }
+      Q += 1;
+      assert(Q <= 120 * n + m);
+      cout << "? " << len << " " << t + 1 << endl;
+      int ret;
+      cin >> ret;
+      --ret;
+      auto [i, j] = pos[ret];
+      if (i > 0) {
+        int sum = i + j;
+        for (int x = sum; x < 2 * n - 1 && x < sum + len; x++) {
+          b[len][x] = max(b[len][x], ret);
+        }
+      }
+      return a[len][t] = ret;
+    };
+    vector<int> cnt(n * n);
+    for (int len = 1; len <= n; len++) {
+      Ask(len, 2 * n - 2);
+      cnt[a[len][0]] += 1;
+      cnt[a[len][2 * n - 2]] += 1;
+    }
+    set<tuple<int, int, int, int, int, int>> s;
+    for (int len = 1; len <= n; len++) {
+      int mn = n * n + 1;
+      for (int i = 1; i < 2 * n - 2; i++) {
+        mn = min(mn, b[len][i]);
+      }
+      s.emplace(mn, len, 0, 0, 2 * n - 2, 0);
+    }
+    const int LIM = 200;
+    vector<int> res;
+    for (int val = 0; val < n * n; val++) {
+      while (true) {
+        if (cnt[val] > 0) {
+          res.push_back(val);
+          cnt[val] -= 1;
+          if (int(res.size()) == m) {
+            break;
+          }
+          continue;
+        }
+        if (s.empty()) {
+          break;
+        }
+        auto it = s.begin();
+        auto [mn, len, _, l, r, k] = *it;
+        if (mn > val) {
+          break;
+        }
+        s.erase(it);
+        if (k < LIM) {
+          int actual_mn = *min_element(b[len].begin() + l + 1, b[len].begin() + r);
+          if (actual_mn > mn) {
+            s.emplace(actual_mn, len, 0, l, r, k + 1);
+            continue;
+          }
+        }
+        int mid = max(l + 1, min(r - 1, (l + r) >> 1));
+        cnt[Ask(len, mid)] += 1;
+        if (l + 1 < mid) {
+          int new_mn = *min_element(b[len].begin() + l + 1, b[len].begin() + mid);
+          s.emplace(new_mn, len, 0, l, mid, 0);
+        }
+        if (mid + 1 < r) {
+          int new_mn = *min_element(b[len].begin() + mid + 1, b[len].begin() + r);
+          s.emplace(new_mn, len, 0, mid, r, 0);
+        }
+      }
+      if (int(res.size()) == m) {
+        break;
+      }
+    }
+    cout << "!";
+    for (int x : res) {
+      cout << " " << x + 1;
+    }
+    cout << endl;
+  }
+  return 0;
+}
